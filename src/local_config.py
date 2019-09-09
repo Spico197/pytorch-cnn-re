@@ -15,7 +15,7 @@ WORD2VEC_WINDOW = 5
 MAX_SENT_LEN = 150
 
 # ----------------- TRAIN -------------------------
-EPOCH = 5
+EPOCH = 1
 BATCH_SIZE = 64
 SEED = 2019
 HIDDEN_SIZE = 220

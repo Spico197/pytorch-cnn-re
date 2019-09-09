@@ -47,11 +47,12 @@ def evaluate(model, test_loader):
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum()
-    print(100*correct/total)
+    print(100*float(correct.item())/total)
 
 
 train_loader = DataLoader(trainset, shuffle=True, batch_size=BATCH_SIZE)
 dev_loader = DataLoader(devset, shuffle=False, batch_size=BATCH_SIZE)
+test_loader = DataLoader(testset, shuffle=False, batch_size=BATCH_SIZE)
 
 model = CNNModel(torch.tensor(word_vectors, dtype=torch.float32))
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
@@ -75,3 +76,8 @@ for epoch in range(EPOCH):
 
     with torch.no_grad():
         evaluate(model, dev_loader)
+
+print('testing...')
+with torch.no_grad():
+        evaluate(model, test_loader)
+print('chance guessing rate is: %.2f' % (100.0/len(rel2id)))
