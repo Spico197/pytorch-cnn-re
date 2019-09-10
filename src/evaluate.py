@@ -12,6 +12,7 @@ def evaluate(model, test_loader, prc=False, report=False):
     y_true = np.array([]).reshape((1, -1))
     y_scores = np.array([]).reshape((1, -1))
     with torch.no_grad():
+        model.eval()
         for data in test_loader:
             tokens, pos1, pos2, labels = data
             outputs = model(tokens, pos1, pos2)

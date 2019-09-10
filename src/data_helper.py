@@ -26,6 +26,9 @@ class SemEvalUtils(object):
         self.model = None
         self.rel2id = dict()
         self.id2rel = dict()
+        self.sents = list()
+        self.rels = list()
+        self._init_construction()
 
     def _load_data(self, filepath):
         data = []
@@ -76,30 +79,65 @@ class SemEvalUtils(object):
             cnt += 1
         return res_data
 
+    def _init_construction(self):
+        self.vocab = set()
+        for file in self.files:
+            data = self._load_data(file)
+            for d in data:
+                self.sents.append(d['sentence'])
+                self.rels.append(d['relation'])
+                for word in d['token']:
+                    self.vocab.add(word)
+        relations = set(self.rels)
+        self.rel2id = {rel:ind for ind, rel in enumerate(relations)}
+        self.id2rel = {ind:rel for ind, rel in enumerate(relations)}
+        self.vocab = list(self.vocab)
+        self.vocab.append('oov')
+        self.vocab.append('unk')
+        self.word2id = {word:i for i, word in enumerate(self.vocab)}
+
     def train_word_vec(self, **kwargs):
         dim = kwargs.get('dim', WORD_EMBEDDING_DIM)
         window = kwargs.get('window', WORD2VEC_WINDOW)
         workers = kwargs.get('workers', multiprocessing.cpu_count())
 
-        sents = list()
-        rels = list()
-        for file in self.files:
-            data = self._load_data(file)
-            sents_t = [d['sentence'] for d in data]
-            rels_t = [d['relation'] for d in data]
-            sents.extend(sents_t)
-            rels.extend(rels_t)
-        relations = set(rels)
-        self.rel2id = {rel:ind for ind, rel in enumerate(relations)}
-        self.id2rel = {ind:rel for ind, rel in enumerate(relations)}
-        self.model = Word2Vec(sents, size=dim, window=window, workers=workers)
-        vocab = list(self.model.wv.vocab.keys())
-        vocab.append('oov')
-        vocab.append('unk')
-        self.word2id = {word:i for i, word in enumerate(vocab)}
-        self.word_vectors = np.vstack([self.model.wv[x] for x in vocab[:-2]])
+        self.model = Word2Vec(self.sents, size=dim, window=window, workers=workers)
+        self.vocab = list(set(self.model.wv.vocab.keys()))
+        self.vocab.append('oov')
+        self.vocab.append('unk')
+        self.word2id = {word:i for i, word in enumerate(self.vocab)}
+        self.word_vectors = np.vstack([self.model.wv[x] for x in self.vocab[:-2]])
         self.word_vectors = np.vstack([self.word_vectors, np.random.uniform(size=(2, dim))])
         return self.word2id, self.word_vectors, self.rel2id, self.id2rel
+
+    def load_pretrained_word_vec(self, path, dim=WORD_EMBEDDING_DIM):
+        vocab = set(self.vocab)
+        if path.endswith('.txt'):
+            with open(path, 'r', encoding='utf-8') as fin:
+                word2vec = dict()
+                words = set()
+                for line in fin:
+                    line = line.strip()
+                    strings = line.split()
+                    if len(strings) < 1 + WORD_EMBEDDING_DIM:
+                        continue
+                    else:
+                        word = strings[0]
+                        if word in vocab:
+                            words.add(word)
+                            word2vec[word] = [float(x) for x in strings[1: 1 + WORD_EMBEDDING_DIM]]
+                        else:
+                            continue
+                #TODO: fix
+                self.vocab = list(words)
+                self.vocab.append('oov')
+                self.vocab.append('unk')
+                self.word2id = {word: ind for ind, word in enumerate(self.vocab)}
+                self.word_vectors = np.array([word2vec[word] for word in self.vocab[:-2]])
+                self.word_vectors = np.vstack([self.word_vectors, np.random.uniform(size=(2, dim))])
+            return self.word2id, self.word_vectors, self.rel2id, self.id2rel
+        else:
+            raise NotImplementedError
 
     def save(self, path):
         with open(path, 'wb') as f:
@@ -206,7 +244,10 @@ utils = SemEvalUtils([TRAIN_FILE, DEV_FILE, TEST_FILE])
 if os.path.exists(WORD2VEC_PATH):
     word2id, word_vectors, rel2id, id2rel = utils.load(WORD2VEC_PATH)
 else:
-    word2id, word_vectors, rel2id, id2rel = utils.train_word_vec(dim=WORD_EMBEDDING_DIM, window=WORD2VEC_WINDOW)
+    if os.path.exists(PRETRAINED_WORD_VECTOR_PATH):
+        word2id, word_vectors, rel2id, id2rel = utils.load_pretrained_word_vec(PRETRAINED_WORD_VECTOR_PATH, dim=WORD_EMBEDDING_DIM)
+    else:
+        word2id, word_vectors, rel2id, id2rel = utils.train_word_vec(dim=WORD_EMBEDDING_DIM, window=WORD2VEC_WINDOW)
     utils.save(WORD2VEC_PATH)
 
 trainset = SemEvalDataSet(TRAIN_FILE, word2id, rel2id)
@@ -219,7 +260,10 @@ if __name__ == "__main__":
     if os.path.exists(WORD2VEC_PATH):
         word2id, word_vectors, rel2id, id2rel = utils.load(WORD2VEC_PATH)
     else:
-        word2id, word_vectors, rel2id, id2rel = utils.train_word_vec(dim=WORD_EMBEDDING_DIM, window=WORD2VEC_WINDOW)
+        if os.path.exists(PRETRAINED_WORD_VECTOR_PATH):
+            word2id, word_vectors, rel2id, id2rel = utils.load_pretrained_word_vec(PRETRAINED_WORD_VECTOR_PATH, dim=WORD_EMBEDDING_DIM)
+        else:
+            word2id, word_vectors, rel2id, id2rel = utils.train_word_vec(dim=WORD_EMBEDDING_DIM, window=WORD2VEC_WINDOW)
         utils.save(WORD2VEC_PATH)
 
     trainset = SemEvalDataSet(TRAIN_FILE, word2id, rel2id)

@@ -29,4 +29,5 @@ if __name__ == "__main__":
     ax.set_xlabel('Recall')
     ax.set_ylabel('Precision')
     ax.grid(True)
-    plt.show()
+    fig.savefig(TEST_PRC_FIGURE_SAVE_PATH)
+    # plt.show()

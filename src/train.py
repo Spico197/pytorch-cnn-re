@@ -24,6 +24,7 @@ if __name__ == "__main__":
     for epoch in range(EPOCH):
         running_loss = 0.0
         for i, data in enumerate(train_loader):
+            model.train()
             tokens, pos1, pos2, label = data
 
             optimizer.zero_grad()
@@ -39,8 +40,8 @@ if __name__ == "__main__":
                     % (epoch+1, i+1, running_loss / PRINT_PER_STEP, acc, precision, recall, f1_micro, f1_macro), end='')
                 running_loss = 0.0
 
-        acc, precision, recall, f1_micro, f1_macro = evaluate(model, dev_loader)
-        print('\nDEV >>> ACC: %.4f, Precision: %.4f, Recall: %.4f, F1-micro: %.4f, F1-macro: %.4f\n' \
+        acc, precision, recall, f1_micro, f1_macro = evaluate(model, test_loader)
+        print('\nTEST >>> ACC: %.4f, Precision: %.4f, Recall: %.4f, F1-micro: %.4f, F1-macro: %.4f\n' \
                 % (acc, precision, recall, f1_micro, f1_macro))
         if f1_micro > best_f1_micro:
             print('Best model, storing...\n')
