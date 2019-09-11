@@ -5,7 +5,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_recall_curve, pr
 from data_helper import rel2id, id2rel
 
 
-def evaluate(model, test_loader, prc=False, report=False):
+def evaluate(model, test_loader, device, prc=False, report=False):
     acc = precision = recall = f1_micro = f1_macro = 0.0
 
     y_pred = np.array([]).reshape((1, -1))
@@ -17,6 +17,14 @@ def evaluate(model, test_loader, prc=False, report=False):
             tokens, pos1, pos2, labels = data
             outputs = model(tokens, pos1, pos2)
             scores, predicted = torch.max(outputs.data, 1)
+
+            tokens = tokens.to(device)
+            pos1 = pos1.to(device)
+            pos2 = pos2.to(device)
+
+            scores = scores.to(torch.device('cpu'))
+            predicted = predicted.to(torch.device('cpu'))
+
 
             predicted = predicted.numpy().reshape((1, -1))
             labels = labels.numpy().reshape((1, -1))

@@ -19,6 +19,9 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
     criterion = nn.CrossEntropyLoss()
 
+    model.to(DEVICE)
+    criterion.to(DEVICE)
+
     best_f1_micro = 0.0
     waste_epoch = 0
     for epoch in range(EPOCH):
@@ -26,6 +29,11 @@ if __name__ == "__main__":
         for i, data in enumerate(train_loader):
             model.train()
             tokens, pos1, pos2, label = data
+
+            tokens = tokens.to(DEVICE)
+            pos1 = pos1.to(DEVICE)
+            pos2 = pos2.to(DEVICE)
+            label = label.to(DEVICE)
 
             optimizer.zero_grad()
             outputs = model(tokens, pos1, pos2)
@@ -35,12 +43,12 @@ if __name__ == "__main__":
 
             running_loss += loss.item()
             if i % PRINT_PER_STEP == PRINT_PER_STEP - 1:
-                acc, precision, recall, f1_micro, f1_macro = evaluate(model, train_loader)
+                acc, precision, recall, f1_micro, f1_macro = evaluate(model, train_loader, DEVICE)
                 print(' [%d, %5d] AVG-Loss: %.4f - TRAIN >>> ACC: %.4f, Precision: %.4f, Recall: %.4f, F1-micro: %.4f, F1-macro: %.4f\r' \
                     % (epoch+1, i+1, running_loss / PRINT_PER_STEP, acc, precision, recall, f1_micro, f1_macro), end='')
                 running_loss = 0.0
 
-        acc, precision, recall, f1_micro, f1_macro = evaluate(model, test_loader)
+        acc, precision, recall, f1_micro, f1_macro = evaluate(model, test_loader, DEVICE)
         print('\nTEST >>> ACC: %.4f, Precision: %.4f, Recall: %.4f, F1-micro: %.4f, F1-macro: %.4f\n' \
                 % (acc, precision, recall, f1_micro, f1_macro))
         if f1_micro > best_f1_micro:
