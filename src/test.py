@@ -16,7 +16,7 @@ if __name__ == "__main__":
     model = CNNModel(torch.tensor(word_vectors, dtype=torch.float32), rel2id)
     model.load_state_dict(torch.load(BEST_MODEL_SAVE_PATH))
 
-    acc, precision, recall, f1_micro, f1_macro, prs = evaluate(model, test_loader, DEVICE, prc=True, report=True)
+    acc, precision, recall, f1_micro, f1_macro, prs = evaluate(model, test_loader, torch.device('cpu'), prc=True, report=True)
     ps, rs, ths = prs
     print('TEST >>> ACC: %.4f, Precision: %.4f, Recall: %.4f, F1-micro: %.4f, F1-macro: %.4f\n' \
                 % (acc, precision, recall, f1_micro, f1_macro))

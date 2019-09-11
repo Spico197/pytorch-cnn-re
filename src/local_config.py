@@ -22,7 +22,7 @@ GPU_DEVICE_NUM = 0
 DEVICE = torch.device("cuda:{}".format(GPU_DEVICE_NUM) if torch.cuda.is_available() else "cpu")
 
 EPOCH = 100
-EARLY_STOP_EPOCH = 5
+EARLY_STOP_EPOCH = -1
 BATCH_SIZE = 64
 SEED = 2019
 
