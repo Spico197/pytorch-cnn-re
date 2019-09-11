@@ -57,7 +57,9 @@ if __name__ == "__main__":
             best_f1_micro = f1_micro
         else:
             waste_epoch += 1
-        if waste_epoch >= EARLY_STOP_EPOCH:
-            break
+
+        if EARLY_STOP_EPOCH > 0:    
+            if waste_epoch >= EARLY_STOP_EPOCH:
+                break
 
     print('Traning finished. Best f1-micro score: %.4f' % best_f1_micro)
